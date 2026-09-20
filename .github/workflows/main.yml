@@ -1,0 +1,41 @@
+name: MenuTerm bauen
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dateien im Repository anzeigen
+        run: find . -maxdepth 3 -not -path './.git/*' | sort
+
+      - name: Projektordner finden
+        run: |
+          SCRIPT="$(find . -name make-dmg.sh -not -path './.git/*' | head -n 1)"
+          if [ -z "$SCRIPT" ]; then
+            echo "make-dmg.sh wurde im Repository nicht gefunden - siehe Dateiliste oben."
+            exit 1
+          fi
+          echo "PROJECT_DIR=$(cd "$(dirname "$SCRIPT")" && pwd)" >> "$GITHUB_ENV"
+
+      - name: Versionen anzeigen
+        run: |
+          uname -m
+          xcodebuild -version
+          swift --version
+
+      - name: App und DMG bauen
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: bash make-dmg.sh
+
+      - name: DMG bereitstellen
+        uses: actions/upload-artifact@v4
+        with:
+          name: MenuTerm-dmg
+          path: ${{ env.PROJECT_DIR }}/build/MenuTerm.dmg
+          if-no-files-found: error
