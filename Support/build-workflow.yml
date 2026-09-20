@@ -1,0 +1,28 @@
+name: MenuTerm bauen
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:   # Knopf "Run workflow" im Reiter "Actions"
+
+jobs:
+  build:
+    runs-on: macos-26   # Mac mit Apple Silicon (arm64), Xcode 26.x
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Versionen anzeigen
+        run: |
+          uname -m
+          xcodebuild -version
+          swift --version
+
+      - name: App und DMG bauen
+        run: bash make-dmg.sh
+
+      - name: DMG bereitstellen
+        uses: actions/upload-artifact@v4
+        with:
+          name: MenuTerm-dmg
+          path: build/MenuTerm.dmg
+          if-no-files-found: error
